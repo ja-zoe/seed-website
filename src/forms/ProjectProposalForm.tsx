@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, X, Download } from "lucide-react";
+import { useEffect } from "react";
 import { projectProposalFormSchema } from "@/schemas/ProjectProposalSchema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,57 +19,102 @@ import type { z } from "zod";
 
 type ProjectProposalFormData = z.infer<typeof projectProposalFormSchema>;
 
+const STORAGE_KEY = "seed-project-proposal-draft";
+
+const getDefaultValues = (): ProjectProposalFormData => ({
+  leads: [{ name: "", email: "", phone: "" }],
+  problemStatement: {
+    environmentalIssue: "",
+    whyItMatters: "",
+    pastAttempts: "",
+    evidenceAndLessons: "",
+  },
+  goal: {
+    overarchingAim: "",
+    howItAddressesProblem: "",
+    approach: "",
+    expectedLearning: "",
+  },
+  objectives: [""],
+  teamRoles: [{ role: "", responsibilities: "", teamMember: "" }],
+  timeline: [
+    {
+      task: "",
+      deliverable: "",
+      startDate: "",
+      endDate: "",
+      responsibleParty: "",
+    },
+  ],
+  expectedExpenses: [
+    {
+      item: "",
+      purpose: "",
+      cost: "",
+      link: "",
+    },
+  ],
+  expectedOutcomes: {
+    accomplishments: "",
+    finalDeliverable: "",
+    contributionToSEED: "",
+  },
+  seedActivity: {
+    what: "",
+    whenWhere: "",
+    why: "",
+  },
+});
+
+const loadSavedData = (): ProjectProposalFormData => {
+  try {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      if (parsed && typeof parsed === 'object') {
+        return { ...getDefaultValues(), ...parsed };
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to load saved form data:", error);
+  }
+  return getDefaultValues();
+};
+
+const saveFormData = (data: ProjectProposalFormData) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.warn("Failed to save form data:", error);
+  }
+};
+
 const ProjectProposalForm = () => {
   const form = useForm<ProjectProposalFormData>({
     resolver: zodResolver(projectProposalFormSchema),
-    defaultValues: {
-      leads: [{ name: "", email: "", phone: "" }],
-      problemStatement: {
-        environmentalIssue: "",
-        whyItMatters: "",
-        pastAttempts: "",
-        evidenceAndLessons: "",
-      },
-      goal: {
-        overarchingAim: "",
-        howItAddressesProblem: "",
-        approach: "",
-        expectedLearning: "",
-      },
-      objectives: [""],
-      teamRoles: [{ role: "", responsibilities: "", teamMember: "" }],
-      timeline: [
-        {
-          task: "",
-          deliverable: "",
-          startDate: "",
-          endDate: "",
-          responsibleParty: "",
-        },
-      ],
-      expectedExpenses: [
-        {
-          item: "",
-          purpose: "",
-          cost: "",
-          link: "",
-        },
-      ],
-      expectedOutcomes: {
-        accomplishments: "",
-        finalDeliverable: "",
-        contributionToSEED: "",
-      },
-      seedActivity: {
-        what: "",
-        whenWhere: "",
-        why: "",
-      },
-    },
+    defaultValues: loadSavedData(),
   });
+
+  // Watch all form values and save to localStorage when they change
+  const watchedValues = form.watch();
+  
+  useEffect(() => {
+    saveFormData(watchedValues);
+  }, [watchedValues]);
+
+  // Clear saved data when form is successfully submitted
+  const clearSavedData = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.warn("Failed to clear saved form data:", error);
+    }
+  };
 
   const onSubmit = (data: ProjectProposalFormData) => {
     console.log("Form submitted:", data);
+    // Clear saved data after successful submission
+    clearSavedData();
     // Handle form submission here
   };
 
@@ -598,7 +644,7 @@ const ProjectProposalForm = () => {
                       <FormItem>
                         <FormLabel>Task</FormLabel>
                         <FormControl>
-                          <Input placeholder="Task description" {...field} />
+                          <Input placeholder="Task name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -611,10 +657,7 @@ const ProjectProposalForm = () => {
                       <FormItem>
                         <FormLabel>Deliverable</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Deliverable description"
-                            {...field}
-                          />
+                          <Input placeholder="Expected deliverable" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -652,7 +695,7 @@ const ProjectProposalForm = () => {
                   name={`timeline.${index}.responsibleParty`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Responsible Party (Optional)</FormLabel>
+                      <FormLabel>Responsible Party</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Who is responsible for this task?"
@@ -699,16 +742,15 @@ const ProjectProposalForm = () => {
               >
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-green-200">
-                    Expense Item {index + 1}
+                    Expense {index + 1}
                   </h3>
                   {form.watch("expectedExpenses").length > 1 && (
                     <Button
                       type="button"
-                      className="bg-red-600 hover:bg-red-500 text-white border-red-500 hover:border-red-400"
+                      variant="destructive"
                       size="sm"
                       onClick={() => {
-                        const currentExpenses =
-                          form.getValues("expectedExpenses");
+                        const currentExpenses = form.getValues("expectedExpenses");
                         form.setValue(
                           "expectedExpenses",
                           currentExpenses.filter((_, i) => i !== index)
@@ -727,7 +769,7 @@ const ProjectProposalForm = () => {
                       <FormItem>
                         <FormLabel>Item</FormLabel>
                         <FormControl>
-                          <Input placeholder="Item name" {...field} />
+                          <Input placeholder="Expense item" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -740,7 +782,7 @@ const ProjectProposalForm = () => {
                       <FormItem>
                         <FormLabel>Cost</FormLabel>
                         <FormControl>
-                          <Input placeholder="Cost amount" {...field} />
+                          <Input placeholder="$0.00" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -755,7 +797,7 @@ const ProjectProposalForm = () => {
                       <FormLabel>Purpose</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="What is this expense for?"
+                          placeholder="Why is this expense necessary?"
                           className="min-h-[80px]"
                           {...field}
                         />
@@ -771,7 +813,10 @@ const ProjectProposalForm = () => {
                     <FormItem>
                       <FormLabel>Link (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="URL to item or vendor" {...field} />
+                        <Input
+                          placeholder="Link to product or vendor"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -791,7 +836,7 @@ const ProjectProposalForm = () => {
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Expense Item
+              Add Expense
             </Button>
           </div>
 
@@ -806,10 +851,10 @@ const ProjectProposalForm = () => {
                 name="expectedOutcomes.accomplishments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Expected Accomplishments</FormLabel>
+                    <FormLabel>Accomplishments</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="What accomplishments do you expect from this project?"
+                        placeholder="What will this project accomplish?"
                         className="min-h-[100px]"
                         {...field}
                       />
@@ -826,7 +871,7 @@ const ProjectProposalForm = () => {
                     <FormLabel>Final Deliverable</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="What will be the final deliverable of this project?"
+                        placeholder="What is the final deliverable of this project?"
                         className="min-h-[100px]"
                         {...field}
                       />
@@ -840,7 +885,7 @@ const ProjectProposalForm = () => {
                 name="expectedOutcomes.contributionToSEED"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contribution to SEED's Mission</FormLabel>
+                    <FormLabel>Contribution to SEED</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="How will this project contribute to SEED's mission?"
@@ -855,24 +900,21 @@ const ProjectProposalForm = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4 pt-8">
+          {/* Form Actions */}
+          <div className="flex gap-4 justify-end">
             <Button
               type="button"
-              size="lg"
-              variant="outline"
               onClick={handleExport}
-              className="px-8 py-4 bg-green-700/50 hover:bg-green-600/50 text-green-100 border-green-500 hover:border-green-400 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-blue-600 hover:bg-blue-500 text-white border-blue-500 hover:border-blue-400"
             >
-              <Download className="h-5 w-5 mr-2" />
+              <Download className="h-4 w-4 mr-2" />
               Export to Excel
             </Button>
             <Button
               type="submit"
-              size="lg"
-              className="px-12 py-4 bg-green-600 hover:bg-green-500 text-white text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-green-600 hover:bg-green-500 text-white border-green-500 hover:border-green-400"
             >
-              Submit Project Proposal
+              Submit Proposal
             </Button>
           </div>
         </form>
