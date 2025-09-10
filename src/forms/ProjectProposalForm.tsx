@@ -111,27 +111,11 @@ const ProjectProposalForm = () => {
     }
   };
 
-  const onSubmit = async (data: ProjectProposalFormData) => {
-    try {
-      // Import the Supabase service
-      const { SupabaseProposalService } = await import('@/services/supabaseProposalService');
-      
-      // Save to database using Supabase
-      await SupabaseProposalService.createProposal(data);
-      
-      // Clear saved data after successful submission
-      clearSavedData();
-      
-      // Show success message
-      alert('Proposal submitted successfully! Thank you for your submission.');
-      
-      // Reset form
-      form.reset(getDefaultValues());
-      
-    } catch (error) {
-      console.error('Failed to submit proposal:', error);
-      alert('Failed to submit proposal. Please try again or contact support.');
-    }
+  const onSubmit = (data: ProjectProposalFormData) => {
+    console.log("Form submitted:", data);
+    // Clear saved data after successful submission
+    clearSavedData();
+    // Handle form submission here
   };
 
   const handleExport = () => {
