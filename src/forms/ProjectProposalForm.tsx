@@ -111,11 +111,37 @@ const ProjectProposalForm = () => {
     }
   };
 
-  const onSubmit = (data: ProjectProposalFormData) => {
-    console.log("Form submitted:", data);
-    // Clear saved data after successful submission
-    clearSavedData();
-    // Handle form submission here
+  const onSubmit = async (data: ProjectProposalFormData) => {
+    try {
+      // Import the service dynamically to avoid SSR issues
+      const { ProposalService } = await import('@/services/proposalService');
+      
+      // Save to database
+      await ProposalService.createProposal({
+        leads: data.leads,
+        problemStatement: data.problemStatement,
+        goal: data.goal,
+        objectives: data.objectives,
+        teamRoles: data.teamRoles,
+        seedActivity: data.seedActivity,
+        timeline: data.timeline,
+        expectedExpenses: data.expectedExpenses,
+        expectedOutcomes: data.expectedOutcomes,
+      });
+      
+      // Clear saved data after successful submission
+      clearSavedData();
+      
+      // Show success message
+      alert('Proposal submitted successfully! Thank you for your submission.');
+      
+      // Reset form
+      form.reset(getDefaultValues());
+      
+    } catch (error) {
+      console.error('Failed to submit proposal:', error);
+      alert('Failed to submit proposal. Please try again or contact support.');
+    }
   };
 
   const handleExport = () => {
