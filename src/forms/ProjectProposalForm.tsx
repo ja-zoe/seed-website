@@ -113,21 +113,11 @@ const ProjectProposalForm = () => {
 
   const onSubmit = async (data: ProjectProposalFormData) => {
     try {
-      // Import the service dynamically to avoid SSR issues
-      const { ProposalService } = await import('@/services/proposalService');
+      // Import the Supabase service
+      const { SupabaseProposalService } = await import('@/services/supabaseProposalService');
       
-      // Save to database
-      await ProposalService.createProposal({
-        leads: data.leads,
-        problemStatement: data.problemStatement,
-        goal: data.goal,
-        objectives: data.objectives,
-        teamRoles: data.teamRoles,
-        seedActivity: data.seedActivity,
-        timeline: data.timeline,
-        expectedExpenses: data.expectedExpenses,
-        expectedOutcomes: data.expectedOutcomes,
-      });
+      // Save to database using Supabase
+      await SupabaseProposalService.createProposal(data);
       
       // Clear saved data after successful submission
       clearSavedData();

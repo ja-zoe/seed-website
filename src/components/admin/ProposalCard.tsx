@@ -1,4 +1,4 @@
-import { ProjectProposal } from '@/db/schema';
+import type { ProjectProposal } from '@/services/supabaseProposalService';
 import { Button } from '@/components/ui/button';
 import { Eye, Download } from 'lucide-react';
 
@@ -11,7 +11,7 @@ interface ProposalCardProps {
 export function ProposalCard({ proposal, onView, onExport }: ProposalCardProps) {
   const leads = proposal.leads as Array<{ name: string; email: string; phone: string }>;
   const primaryLead = leads[0];
-  const problemStatement = proposal.problemStatement as { environmentalIssue: string };
+  const problemStatement = proposal.problem_statement as { environmentalIssue: string };
 
   return (
     <div className="bg-gradient-to-br from-green-800 to-green-900 p-6 rounded-xl border border-green-700 shadow-lg">
@@ -23,7 +23,7 @@ export function ProposalCard({ proposal, onView, onExport }: ProposalCardProps) 
           <div className="space-y-1 text-green-200">
             <p><strong>Lead:</strong> {primaryLead?.name}</p>
             <p><strong>Email:</strong> {primaryLead?.email}</p>
-            <p><strong>Submitted:</strong> {new Date(proposal.submittedAt).toLocaleDateString()}</p>
+            <p><strong>Submitted:</strong> {new Date(proposal.submitted_at).toLocaleDateString()}</p>
           </div>
         </div>
         <div className="flex gap-2 ml-4">

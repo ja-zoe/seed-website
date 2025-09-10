@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { SupabaseAuthService } from '@/services/supabaseAuthService';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { ProposalService } from '@/services/proposalService';
-import { ProjectProposal } from '@/db/schema';
+import { SupabaseProposalService } from '@/services/supabaseProposalService';
+import type { ProjectProposal } from '@/services/supabaseProposalService';
 import { ArrowLeft, Download } from 'lucide-react';
 import { exportProjectProposal } from '@/utils/exportUtils';
 import type { z } from 'zod';
@@ -19,14 +20,23 @@ export default function ProposalDetail() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check authentication
-    const isAuthenticated = localStorage.getItem('admin-authenticated');
-    if (!isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
+    const checkAuthAndLoad = async () => {
+      const isAuthenticated = await SupabaseAuthService.isAuthenticated();
+      if (!isAuthenticated) {
+        navigate('/admin');
+        return;
+      }
+      
+      const isAdmin = await SupabaseAuthService.isAdmin();
+      if (!isAdmin) {
+        navigate('/admin');
+        return;
+      }
+      
+      loadProposal();
+    };
 
-    loadProposal();
+    checkAuthAndLoad();
   }, [id, navigate]);
 
   const loadProposal = async () => {
@@ -39,7 +49,7 @@ export default function ProposalDetail() {
         return;
       }
       
-      const proposalData = await ProposalService.getProposalById(parseInt(id));
+      const proposalData = await SupabaseProposalService.getProposalById(parseInt(id));
       
       if (!proposalData) {
         setError('Proposal not found');
@@ -61,14 +71,14 @@ export default function ProposalDetail() {
     try {
       const formData: ProjectProposalFormData = {
         leads: proposal.leads as any,
-        problemStatement: proposal.problemStatement as any,
+        problemStatement: proposal.problem_statement as any,
         goal: proposal.goal as any,
         objectives: proposal.objectives as any,
-        teamRoles: proposal.teamRoles as any,
-        seedActivity: proposal.seedActivity as any,
+        teamRoles: proposal.team_roles as any,
+        seedActivity: proposal.seed_activity as any,
         timeline: proposal.timeline as any,
-        expectedExpenses: proposal.expectedExpenses as any,
-        expectedOutcomes: proposal.expectedOutcomes as any,
+        expectedExpenses: proposal.expected_expenses as any,
+        expectedOutcomes: proposal.expected_outcomes as any,
       };
       
       exportProjectProposal(formData, `proposal-${proposal.id}`);
@@ -114,14 +124,14 @@ export default function ProposalDetail() {
   }
 
   const leads = proposal.leads as Array<{ name: string; email: string; phone: string }>;
-  const problemStatement = proposal.problemStatement as any;
+  const problemStatement = proposal.problem_statement as any;
   const goal = proposal.goal as any;
   const objectives = proposal.objectives as string[];
-  const teamRoles = proposal.teamRoles as any[] || [];
-  const seedActivity = proposal.seedActivity as any;
+  const teamRoles = proposal.team_roles as any[] || [];
+  const seedActivity = proposal.seed_activity as any;
   const timeline = proposal.timeline as any[];
-  const expectedExpenses = proposal.expectedExpenses as any[];
-  const expectedOutcomes = proposal.expectedOutcomes as any;
+  const expectedExpenses = proposal.expected_expenses as any[];
+  const expectedOutcomes = proposal.expected_outcomes as any;
 
   return (
     <AdminLayout title={`Proposal #${proposal.id}`}>
@@ -150,7 +160,7 @@ export default function ProposalDetail() {
           <h2 className="text-2xl font-bold text-green-100 mb-4">Proposal Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-green-200">
             <div><strong>Proposal ID:</strong> #{proposal.id}</div>
-            <div><strong>Submitted:</strong> {new Date(proposal.submittedAt).toLocaleString()}</div>
+            <div><strong>Submitted:</strong> {new Date(proposal.submitted_at).toLocaleString()}</div>
           </div>
         </div>
 

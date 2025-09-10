@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SupabaseAuthService } from '@/services/supabaseAuthService';
 
 export default function AdminLogin() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -15,15 +17,31 @@ export default function AdminLogin() {
     setError('');
     setIsLoading(true);
 
-    // Simple password check - in production, use proper authentication
-    if (password === 'seed-admin-2024') {
-      localStorage.setItem('admin-authenticated', 'true');
-      navigate('/admin/dashboard');
-    } else {
-      setError('Invalid password');
+    try {
+      const { user, error: authError } = await SupabaseAuthService.signIn(email, password);
+      
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+      
+      if (user) {
+        // Check if user is admin
+        const isAdmin = await SupabaseAuthService.isAdmin();
+        if (isAdmin) {
+          localStorage.setItem('admin-authenticated', 'true');
+          navigate('/admin/dashboard');
+        } else {
+          setError('Access denied. Admin privileges required.');
+          await SupabaseAuthService.signOut();
+        }
+      }
+    } catch (err) {
+      setError('Login failed. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -39,6 +57,22 @@ export default function AdminLogin() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <Label htmlFor="email" className="text-green-100 font-medium">
+              Admin Email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-green-800/50 border-green-600 text-green-100"
+              placeholder="admin@rutgers.edu"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          
           <div>
             <Label htmlFor="password" className="text-green-100 font-medium">
               Admin Password

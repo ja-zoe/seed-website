@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SupabaseAuthService } from '@/services/supabaseAuthService';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ProposalCard } from '@/components/admin/ProposalCard';
 import { ProposalStats } from '@/components/admin/ProposalStats';
 import { SearchBar } from '@/components/admin/SearchBar';
-import { ProposalService } from '@/services/proposalService';
-import { ProjectProposal } from '@/db/schema';
+import { SupabaseProposalService } from '@/services/supabaseProposalService';
+import type { ProjectProposal } from '@/services/supabaseProposalService';
 import { exportProjectProposal } from '@/utils/exportUtils';
 import type { z } from 'zod';
 import { projectProposalFormSchema } from '@/schemas/ProjectProposalSchema';
@@ -20,14 +21,23 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check authentication
-    const isAuthenticated = localStorage.getItem('admin-authenticated');
-    if (!isAuthenticated) {
-      navigate('/admin');
-      return;
-    }
+    const checkAuth = async () => {
+      const isAuthenticated = await SupabaseAuthService.isAuthenticated();
+      if (!isAuthenticated) {
+        navigate('/admin');
+        return;
+      }
+      
+      const isAdmin = await SupabaseAuthService.isAdmin();
+      if (!isAdmin) {
+        navigate('/admin');
+        return;
+      }
+      
+      loadData();
+    };
 
-    loadData();
+    checkAuth();
   }, [navigate]);
 
   const loadData = async (searchTerm?: string) => {
@@ -36,8 +46,8 @@ export default function AdminDashboard() {
       setError('');
       
       const [proposalsData, statsData] = await Promise.all([
-        ProposalService.getProposals(searchTerm),
-        ProposalService.getStatistics()
+        SupabaseProposalService.getProposals(searchTerm),
+        SupabaseProposalService.getStatistics()
       ]);
       
       setProposals(proposalsData);
@@ -63,14 +73,14 @@ export default function AdminDashboard() {
       // Convert database format back to form format for export
       const formData: ProjectProposalFormData = {
         leads: proposal.leads as any,
-        problemStatement: proposal.problemStatement as any,
+        problemStatement: proposal.problem_statement as any,
         goal: proposal.goal as any,
         objectives: proposal.objectives as any,
-        teamRoles: proposal.teamRoles as any,
-        seedActivity: proposal.seedActivity as any,
+        teamRoles: proposal.team_roles as any,
+        seedActivity: proposal.seed_activity as any,
         timeline: proposal.timeline as any,
-        expectedExpenses: proposal.expectedExpenses as any,
-        expectedOutcomes: proposal.expectedOutcomes as any,
+        expectedExpenses: proposal.expected_expenses as any,
+        expectedOutcomes: proposal.expected_outcomes as any,
       };
       
       exportProjectProposal(formData, `proposal-${proposal.id}`);
