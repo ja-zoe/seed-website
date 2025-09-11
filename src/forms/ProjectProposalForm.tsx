@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, X, Download } from "lucide-react";
-import { useEffect } from "react";
+import { Plus, X, Download, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { projectProposalFormSchema } from "@/schemas/ProjectProposalSchema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { exportProjectProposal } from "@/utils/exportUtils";
+import { submitProjectProposal } from "@/services/projectProposalService";
 import type { z } from "zod";
 
 type ProjectProposalFormData = z.infer<typeof projectProposalFormSchema>;
@@ -90,6 +91,10 @@ const saveFormData = (data: ProjectProposalFormData) => {
 };
 
 const ProjectProposalForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [submitMessage, setSubmitMessage] = useState('');
+
   const form = useForm<ProjectProposalFormData>({
     resolver: zodResolver(projectProposalFormSchema),
     defaultValues: loadSavedData(),
@@ -111,11 +116,44 @@ const ProjectProposalForm = () => {
     }
   };
 
-  const onSubmit = (data: ProjectProposalFormData) => {
-    console.log("Form submitted:", data);
-    // Clear saved data after successful submission
-    clearSavedData();
-    // Handle form submission here
+  const onSubmit = async (data: ProjectProposalFormData) => {
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setSubmitMessage('');
+
+    try {
+      // Transform form data to match Supabase schema
+      const proposalData = {
+        leads: data.leads,
+        objectives: data.objectives,
+        team_roles: data.teamRoles,
+        timeline: data.timeline,
+        expected_expenses: data.expectedExpenses,
+        problem_statement: data.problemStatement,
+        goal: data.goal,
+        seed_activity: data.seedActivity,
+        expected_outcomes: data.expectedOutcomes,
+      };
+      
+      const result = await submitProjectProposal(proposalData);
+      
+      if (result.success) {
+        setSubmitStatus('success');
+        setSubmitMessage('Project proposal submitted successfully!');
+        clearSavedData();
+        // Optionally reset form
+        // form.reset(getDefaultValues());
+      } else {
+        setSubmitStatus('error');
+        setSubmitMessage(result.error || 'Failed to submit proposal');
+      }
+    } catch (error) {
+      setSubmitStatus('error');
+      setSubmitMessage('An unexpected error occurred. Please try again.');
+      console.error('Submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleExport = () => {
@@ -900,21 +938,45 @@ const ProjectProposalForm = () => {
             </div>
           </div>
 
+          {/* Status Messages */}
+          {submitStatus === 'success' && (
+            <div className="bg-green-900/50 border border-green-600 rounded-lg p-4 flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <p className="text-green-100">{submitMessage}</p>
+            </div>
+          )}
+          
+          {submitStatus === 'error' && (
+            <div className="bg-red-900/50 border border-red-600 rounded-lg p-4 flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <p className="text-red-100">{submitMessage}</p>
+            </div>
+          )}
+
           {/* Form Actions */}
           <div className="flex gap-4 justify-end">
             <Button
               type="button"
               onClick={handleExport}
-              className="bg-blue-600 hover:bg-blue-500 text-white border-blue-500 hover:border-blue-400"
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-500 text-white border-blue-500 hover:border-blue-400 disabled:opacity-50"
             >
               <Download className="h-4 w-4 mr-2" />
               Export to Excel
             </Button>
             <Button
               type="submit"
-              className="bg-green-600 hover:bg-green-500 text-white border-green-500 hover:border-green-400"
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-500 text-white border-green-500 hover:border-green-400 disabled:opacity-50"
             >
-              Submit Proposal
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Proposal'
+              )}
             </Button>
           </div>
         </form>
