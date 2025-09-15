@@ -1,23 +1,22 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Eye, 
-  Calendar, 
-  Users, 
-  DollarSign, 
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Search,
+  Eye,
+  Calendar,
+  Users,
+  DollarSign,
   Target,
   LogOut,
-  Filter,
-  Download
-} from 'lucide-react';
-import type { ProjectProposal } from '@/lib/supabase';
-import ProposalDetailModal from './ProposalDetailModal';
-import { exportProposalsToExcel } from '@/utils/adminExportUtils';
+  Download,
+} from "lucide-react";
+import type { ProjectProposal } from "@/lib/supabase";
+import ProposalDetailModal from "./ProposalDetailModal";
+import { exportProposalsToExcel } from "@/utils/adminExportUtils";
 
 interface AdminPanelProps {
   onLogout: () => void;
@@ -25,10 +24,13 @@ interface AdminPanelProps {
 
 const AdminPanel = ({ onLogout }: AdminPanelProps) => {
   const [proposals, setProposals] = useState<ProjectProposal[]>([]);
-  const [filteredProposals, setFilteredProposals] = useState<ProjectProposal[]>([]);
+  const [filteredProposals, setFilteredProposals] = useState<ProjectProposal[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProposal, setSelectedProposal] = useState<ProjectProposal | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProposal, setSelectedProposal] =
+    useState<ProjectProposal | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -41,19 +43,16 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
 
   const fetchProposals = async () => {
     try {
-      const { data, error } = await supabase
-        .from('project_proposals')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from("project_proposals").select();
 
       if (error) {
-        console.error('Error fetching proposals:', error);
+        console.error("Error fetching proposals:", error);
         return;
       }
 
       setProposals(data || []);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -65,20 +64,25 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
       return;
     }
 
-    const filtered = proposals.filter(proposal => {
+    const filtered = proposals.filter((proposal) => {
       const searchLower = searchTerm.toLowerCase();
-      
+
       // Search in leads names and emails
-      const leadsMatch = proposal.leads.some(lead => 
-        lead.name.toLowerCase().includes(searchLower) ||
-        lead.email.toLowerCase().includes(searchLower)
+      const leadsMatch = proposal.leads.some(
+        (lead) =>
+          lead.name.toLowerCase().includes(searchLower) ||
+          lead.email.toLowerCase().includes(searchLower)
       );
 
       // Search in problem statement
-      const problemMatch = proposal.problem_statement.environmentalIssue.toLowerCase().includes(searchLower);
+      const problemMatch = proposal.problem_statement.environmentalIssue
+        .toLowerCase()
+        .includes(searchLower);
 
       // Search in goal
-      const goalMatch = proposal.goal.overarchingAim.toLowerCase().includes(searchLower);
+      const goalMatch = proposal.goal.overarchingAim
+        .toLowerCase()
+        .includes(searchLower);
 
       return leadsMatch || problemMatch || goalMatch;
     });
@@ -96,18 +100,20 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const calculateTotalBudget = (expenses: ProjectProposal['expected_expenses']) => {
+  const calculateTotalBudget = (
+    expenses: ProjectProposal["expected_expenses"]
+  ) => {
     return expenses.reduce((total, expense) => {
-      const cost = parseFloat(expense.cost.replace(/[$,]/g, '')) || 0;
+      const cost = parseFloat(expense.cost.replace(/[$,]/g, "")) || 0;
       return total + cost;
     }, 0);
   };
@@ -129,7 +135,9 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
       <div className="bg-green-900 border-b border-green-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-green-100">SEED Admin Dashboard</h1>
+            <h1 className="text-2xl font-bold text-green-100">
+              SEED Admin Dashboard
+            </h1>
             <p className="text-green-300">Project Proposals Management</p>
           </div>
           <div className="flex items-center gap-4">
@@ -144,7 +152,7 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
             <Button
               onClick={onLogout}
               variant="outline"
-              className="border-green-600 text-green-100 hover:bg-green-800"
+              className="border-green-600 text-green-100 bg-green-600 hover:text-green-200 hover:bg-green-800"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
@@ -164,7 +172,9 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
               <Target className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-100">{proposals.length}</div>
+              <div className="text-2xl font-bold text-green-100">
+                {proposals.length}
+              </div>
             </CardContent>
           </Card>
 
@@ -177,9 +187,14 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-100">
-                ${proposals.reduce((total, proposal) => 
-                  total + calculateTotalBudget(proposal.expected_expenses), 0
-                ).toLocaleString()}
+                $
+                {proposals
+                  .reduce(
+                    (total, proposal) =>
+                      total + calculateTotalBudget(proposal.expected_expenses),
+                    0
+                  )
+                  .toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -193,7 +208,10 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-100">
-                {new Set(proposals.flatMap(p => p.leads.map(l => l.email))).size}
+                {
+                  new Set(proposals.flatMap((p) => p.leads.map((l) => l.email)))
+                    .size
+                }
               </div>
             </CardContent>
           </Card>
@@ -201,18 +219,20 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
           <Card className="bg-green-800 border-green-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-green-100">
-                This Month
+                Latest Submission
               </CardTitle>
               <Calendar className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-100">
-                {proposals.filter(p => {
-                  const proposalDate = new Date(p.created_at!);
-                  const now = new Date();
-                  return proposalDate.getMonth() === now.getMonth() && 
-                         proposalDate.getFullYear() === now.getFullYear();
-                }).length}
+              <div className="text-lg font-bold text-green-100">
+                {proposals.length > 0
+                  ? formatDate(
+                      proposals
+                        .map((p) => new Date(p.created_at!))
+                        .sort((a, b) => b.getTime() - a.getTime())[0]
+                        .toISOString()
+                    )
+                  : "No submissions"}
               </div>
             </CardContent>
           </Card>
@@ -261,12 +281,17 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
               </thead>
               <tbody className="divide-y divide-green-700">
                 {filteredProposals.map((proposal) => (
-                  <tr key={proposal.id} className="hover:bg-green-700/50 transition-colors">
+                  <tr
+                    key={proposal.id}
+                    className="hover:bg-green-700/50 transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="space-y-1">
                         {proposal.leads.map((lead, index) => (
                           <div key={index} className="text-sm">
-                            <div className="font-medium text-green-100">{lead.name}</div>
+                            <div className="font-medium text-green-100">
+                              {lead.name}
+                            </div>
                             <div className="text-green-300">{lead.email}</div>
                           </div>
                         ))}
@@ -276,17 +301,24 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
                       <div className="text-sm text-green-100 max-w-xs">
                         <div className="font-medium mb-1">
                           {proposal.goal.overarchingAim.substring(0, 60)}
-                          {proposal.goal.overarchingAim.length > 60 && '...'}
+                          {proposal.goal.overarchingAim.length > 60 && "..."}
                         </div>
                         <div className="text-green-300 text-xs">
-                          {proposal.problem_statement.environmentalIssue.substring(0, 80)}
-                          {proposal.problem_statement.environmentalIssue.length > 80 && '...'}
+                          {proposal.problem_statement.environmentalIssue.substring(
+                            0,
+                            80
+                          )}
+                          {proposal.problem_statement.environmentalIssue
+                            .length > 80 && "..."}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-green-100">
-                        ${calculateTotalBudget(proposal.expected_expenses).toLocaleString()}
+                        $
+                        {calculateTotalBudget(
+                          proposal.expected_expenses
+                        ).toLocaleString()}
                       </div>
                       <div className="text-xs text-green-300">
                         {proposal.expected_expenses.length} items
@@ -314,11 +346,13 @@ const AdminPanel = ({ onLogout }: AdminPanelProps) => {
           {filteredProposals.length === 0 && (
             <div className="text-center py-12">
               <div className="text-green-300 mb-2">
-                {searchTerm ? 'No proposals match your search criteria' : 'No proposals submitted yet'}
+                {searchTerm
+                  ? "No proposals match your search criteria"
+                  : "No proposals submitted yet"}
               </div>
               {searchTerm && (
                 <Button
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => setSearchTerm("")}
                   variant="outline"
                   size="sm"
                   className="border-green-600 text-green-100 hover:bg-green-800"

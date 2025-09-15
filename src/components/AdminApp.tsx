@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import AdminLogin from './AdminLogin';
-import AdminPanel from './AdminPanel';
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import AdminLogin from "./AdminLogin";
+import AdminPanel from "./AdminPanel";
 
 const AdminApp = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,7 +10,9 @@ const AdminApp = () => {
   useEffect(() => {
     // Check if user is already authenticated
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
       setLoading(false);
     };
@@ -18,11 +20,11 @@ const AdminApp = () => {
     checkAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setIsAuthenticated(!!session);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
