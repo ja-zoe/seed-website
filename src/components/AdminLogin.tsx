@@ -1,10 +1,16 @@
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { AlertCircle, Loader2, Shield } from 'lucide-react';
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, Loader2, Shield } from "lucide-react";
 import SEEDlogo from "@/assets/SEEDlogo.png";
 
 interface AdminLoginProps {
@@ -12,15 +18,15 @@ interface AdminLoginProps {
 }
 
 const AdminLogin = ({ onLogin }: AdminLoginProps) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -37,8 +43,8 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
         onLogin();
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-      console.error('Login error:', err);
+      setError("An unexpected error occurred. Please try again.");
+      console.error("Login error:", err);
     } finally {
       setLoading(false);
     }
@@ -52,8 +58,12 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
           <div className="flex justify-center mb-4">
             <img src={SEEDlogo} alt="SEED Logo" className="w-20 h-20" />
           </div>
-          <h1 className="text-3xl font-bold text-green-100 mb-2">SEED Admin Portal</h1>
-          <p className="text-green-300">Access the project proposals dashboard</p>
+          <h1 className="text-3xl font-bold text-green-100 mb-2">
+            SEED Admin Portal
+          </h1>
+          <p className="text-green-300">
+            Access the project proposals dashboard
+          </p>
         </div>
 
         <Card className="bg-green-800 border-green-700">
@@ -117,14 +127,14 @@ const AdminLogin = ({ onLogin }: AdminLoginProps) => {
                     Signing In...
                   </>
                 ) : (
-                  'Sign In'
+                  "Sign In"
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-green-300 text-sm">
-                Need access? Contact the SEED administrator
+                Need access? Contact the SEED Project Manager
               </p>
             </div>
           </CardContent>
